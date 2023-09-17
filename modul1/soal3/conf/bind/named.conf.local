@@ -1,0 +1,4 @@
+zone "tka-c3.local" {
+    type master;
+    file "/etc/bind/db.tka-c3.local";
+};

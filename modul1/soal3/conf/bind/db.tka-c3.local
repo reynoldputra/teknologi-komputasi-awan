@@ -1,0 +1,10 @@
+$TTL    604800
+@       IN      SOA     ns.tka-c3.local. admin.tka-c3.local. (
+                        2023091701  ; Serial
+                        604800      ; Refresh
+                        86400       ; Retry
+                        2419200     ; Expire
+                        604800 )    ; Negative Cache TTL
+@       IN      NS      ns.tka-c3.local.
+@       IN      A       192.168.33.10
+ns      IN      A       192.168.33.10
