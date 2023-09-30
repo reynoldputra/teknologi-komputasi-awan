@@ -1,0 +1,144 @@
+
+- name: Set up MySQL on Debian
+  hosts: database
+  become: true
+
+  tasks:
+    # - name: Install wget
+    #   apt:
+    #     name: wget
+    #     state: present
+
+    - name: Copy mysql package
+      copy:
+        src: ./mysql-apt-config_0.8.22-1_all.deb
+        dest: /tmp/mysql-apt-config_0.8.22-1_all.deb
+
+    - name: Install mysql-apt-config package
+      apt:
+        deb: /tmp/mysql-apt-config_0.8.22-1_all.deb
+        state: present
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install MySQL server
+      apt:
+        name: mysql-server
+        state: present    
+
+    - name: creating mysql user
+      mysql_user:
+        name: cloud
+        password: cloudbusting
+        priv: '*.*:ALL'
+        host: '%'
+        state: present
+
+    - name: creating database
+      mysql_db:
+        name: laravel
+        state: present
+
+    - name: Enable remote login to mysql
+      lineinfile:
+         path: /etc/mysql/mysql.conf.d/mysqld.cnf
+         regexp: '^bind-address'
+         line: 'bind-address = 0.0.0.0'
+         backup: yes
+      notify:
+         - Restart mysql
+
+  handlers:
+    - name: Restart mysql
+      service:
+        name: mysql
+        state: restarted
+
+- name: Set up workers
+  hosts: worker
+  become: true
+
+  tasks:
+    - name: Add repo
+      ansible.builtin.apt_repository:
+        repo: ppa:ondrej/php
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install PHP
+      apt:
+        name:
+          - php8.1
+          - php8.1-common
+        state: present
+
+    - name: Install composer
+      ansible.builtin.apt:
+        name : composer
+        state: latest
+
+    - name: Install nginx
+      ansible.builtin.apt:
+        name : nginx
+        state: latest
+
+    - name: Clone repository
+      git:
+        repo: https://github.com/windyarya/laravel.git
+        dest: /var/www/laravel
+        force: yes
+
+    - name: Install deps
+      command: 'composer install'
+      args:
+        chdir: /var/www/laravel/
+        become_user: vagrant
+
+    - name: Configure Laravel .env
+      copy:
+        src: ./.env
+        dest: /var/www/laravel/.env
+    - name: Create Nginx configuration for Laravel
+      copy:
+        content: |
+          server {
+              listen 80;
+              server_name 172.16.1.50;
+
+              root /var/www/laravel/public;
+              index index.php;
+
+              location / {
+                  try_files $uri $uri/ /index.php?$query_string;
+              }
+
+              location ~ \.php$ {
+                  include snippets/fastcgi-php.conf;
+                  fastcgi_pass unix:/var/run/php/php8.1-fpm.sock; # adjust to your PHP version and setup
+              }
+          }
+        dest: /etc/nginx/sites-available/laravel
+        mode: '0644'
+
+    - name: Enable Nginx configuration for Laravel
+      file:
+        src: /etc/nginx/sites-available/laravel
+        dest: /etc/nginx/sites-enabled/laravel
+        state: link
+
+    - name: Generate Laravel APP_KEY
+      command: 'php artisan key:generate'
+      args:
+        chdir: /var/www/laravel/
+      become_user: vagrant
+        
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
+
+

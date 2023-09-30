@@ -1,0 +1,51 @@
+- name: Set up workers
+  hosts: worker
+  become: true
+
+  tasks:
+    - name: Add repo
+      ansible.builtin.apt_repository:
+        repo: ppa:ondrej/php
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+    - name: Install PHP
+      apt:
+        name:
+          - php8.1
+          - php8.1-common
+        state: present
+    - name: Install composer
+      ansible.builtin.apt:
+        name : composer
+        state: latest
+    - name: Install nginx
+      ansible.builtin.apt:
+        name : nginx
+        state: latest
+
+    - name: Clone repository
+      git:
+        repo: https://github.com/windyarya/laravel.git
+        dest: /var/www/laravel
+        force: yes
+
+    - name: Configure Laravel .env
+      copy:
+        src: ./.env
+        dest: /var/www/laravel/.env
+
+    - name: Set up nginx
+      template:
+        src: laravel-nginx.conf
+        dest: /etc/nginx/sites-available/laravel
+      notify:
+        - Reload Nginx
+
+  handlers:
+    - name: Reload Nginx
+      service:
+        name: nginx
+        state: reloaded
+
+
