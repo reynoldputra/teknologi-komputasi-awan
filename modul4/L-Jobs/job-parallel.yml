@@ -1,0 +1,14 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: wilsoooonnnn-03-parallel-job
+spec:
+  completions: 10
+  parallelism: 3
+  template:
+    spec:
+      containers:
+      - name: worker
+        image: ubuntu
+        command: ["date"]
+      restartPolicy: Never

@@ -1,0 +1,12 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: wilsoooonnnn-03-my-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: my-container
+        image: ubuntu
+        command: ["echo", "testing"]
+      restartPolicy: Never

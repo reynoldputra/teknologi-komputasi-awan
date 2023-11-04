@@ -1,0 +1,12 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: wilsoooonnnn-03-scalling
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: wilsoooonnnn-03-to-scall
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
