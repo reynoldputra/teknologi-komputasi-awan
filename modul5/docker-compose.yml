@@ -1,0 +1,94 @@
+version: '3'
+
+services:
+  app:
+    build: ./app
+    ports:
+      - "8001:8000"
+    depends_on:
+      - mongodb
+    volumes:
+      - ./app:/app
+    environment:
+      - APP_NAME=A
+  app2:
+    build: ./app
+    ports:
+      - "8002:8000"
+    depends_on:
+      - mongodb
+    volumes:
+      - ./app:/app
+    environment:
+      - APP_NAME=B
+  app3:
+    build: ./app
+    ports:
+      - "8003:8000"
+    depends_on:
+      - mongodb
+    volumes:
+      - ./app:/app
+    environment:
+      - APP_NAME=C
+  app4:
+    build: ./app
+    ports:
+      - "8004:8000"
+    depends_on:
+      - mongodb
+    volumes:
+      - ./app:/app
+    environment:
+      - APP_NAME=D
+  app5:
+    build: ./app
+    ports:
+      - "8006:8000"
+    depends_on:
+      - mongodb
+    volumes:
+      - ./app:/app
+    environment:
+      - APP_NAME=E
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "8888:80"
+    depends_on:
+      - app
+      - app2
+      - app3
+      - app4
+      - app5
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+
+  mongodb:
+    image: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+    volumes:
+      - ./volumes:/data/db
+
+  mongo-express:
+    image: mongo-express
+    ports:
+      - "8082:8081"
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=admin
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=admin
+    depends_on:
+      - mongodb
+
+volumes:
+  mongodb_data:
+    driver: local
